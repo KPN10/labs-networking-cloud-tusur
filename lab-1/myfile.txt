@@ -1,1 +1,2 @@
 Practice work with git software
+I am beginning to understand git!
