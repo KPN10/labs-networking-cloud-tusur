@@ -26,9 +26,11 @@ Vagrant.configure("2") do |config|
         # Install Apache
         web.vm.provision "shell", inline: <<-SHELL
             sudo apt-get update
-            sudo apt-get install apache2 -y
+            sudo apt-get install apache2 mysql-client -y
             sudo systemctl enable apache2
         SHELL
+        web.vm.provision "shell", path: "install-php-modules.sh"
+        web.vm.provision "shell", path: "write-php.sh"
     end
 
     # Database
@@ -48,6 +50,8 @@ Vagrant.configure("2") do |config|
             sudo apt-get install -y mysql-server
             sudo systemctl enable mysql
         SHELL
+        db.vm.provision "shell", path: "change-bind-address.sh"
+        db.vm.provision "shell", path: "create-db-user.sh", privileged: true
     end
 
     # Load Balancer
@@ -67,5 +71,7 @@ Vagrant.configure("2") do |config|
             sudo apt-get install -y haproxy
             sudo systemctl enable haproxy
         SHELL
+
+        lb.vm.provision "shell", path: "configure-haproxy.sh"
     end
 end
