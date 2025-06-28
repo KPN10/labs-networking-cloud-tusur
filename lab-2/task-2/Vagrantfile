@@ -1,0 +1,71 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+PROXY_SETUP = <<-SHELL
+    echo "export http_proxy=http://192.168.1.1:3128" | sudo tee -a /etc/environment
+    echo "export https_proxy=http://192.168.1.1:3128" | sudo tee -a /etc/environment
+    echo "export no_proxy=localhost,127.0.0.1" | sudo tee -a /etc/environment
+SHELL
+
+ENV['VAGRANT_SERVER_URL'] = 'https://vagrant.elab.pro'
+BASE_IMAGE = "bento/ubuntu-24.04"
+VM_GROUP = "/MyWebService"
+
+Vagrant.configure("2") do |config|
+    # Web server
+    config.vm.define "webserver" do |web|
+        web.vm.box = BASE_IMAGE
+        web.vm.network "private_network", ip: "192.168.50.10"
+
+        web.vm.provider "virtualbox" do |vb|
+            vb.name = "webserver"
+            vb.customize ["modifyvm", :id, "--groups", VM_GROUP]
+        end
+
+        web.vm.provision "shell", inline: PROXY_SETUP
+        # Install Apache
+        web.vm.provision "shell", inline: <<-SHELL
+            sudo apt-get update
+            sudo apt-get install apache2 -y
+            sudo systemctl enable apache2
+        SHELL
+    end
+
+    # Database
+    config.vm.define "dbserver" do |db|
+        db.vm.box = BASE_IMAGE
+        db.vm.network "private_network", ip: "192.168.50.11"
+
+        db.vm.provider "virtualbox" do |vb|
+            vb.name = "db"
+            vb.customize ["modifyvm", :id, "--groups", VM_GROUP]
+        end
+
+        db.vm.provision "shell", inline: PROXY_SETUP
+        # Install MySQL
+        db.vm.provision "shell", inline: <<-SHELL
+            sudo apt-get update
+            sudo apt-get install -y mysql-server
+            sudo systemctl enable mysql
+        SHELL
+    end
+
+    # Load Balancer
+    config.vm.define "loadbalancer" do |lb|
+        lb.vm.box = BASE_IMAGE
+        lb.vm.network "public_network"
+
+        lb.vm.provider "virtualbox" do |vb|
+            vb.name = "lb"
+            vb.customize ["modifyvm", :id, "--groups", VM_GROUP]
+        end
+
+        lb.vm.provision "shell", inline: PROXY_SETUP
+        # Install HAProxy
+        lb.vm.provision "shell", inline: <<-SHELL
+            sudo apt-get update
+            sudo apt-get install -y haproxy
+            sudo systemctl enable haproxy
+        SHELL
+    end
+end
