@@ -1,14 +1,16 @@
 #!/bin/bash
 
+echo "=== Write PHP code ==="
+
 TARGET_FILE="/var/www/html/test_db.php"
 
-# Проверка прав root
+# Rights verification
 if [ "$EUID" -ne 0 ]; then
-  echo "Пожалуйста, запустите скрипт с sudo или от имени root"
+  echo "Please run the script from root (sudo)."
   exit 1
 fi
 
-# Создание PHP-файла
+# Creating a PHP file
 cat << 'EOF' > "$TARGET_FILE"
 <?php
 $host = "192.168.50.11";
@@ -26,10 +28,10 @@ echo "Connected to MySQL successfully!";
 ?>
 EOF
 
-# Проверка результата
+# Checking the result
 if [ $? -eq 0 ]; then
-  echo "Файл $TARGET_FILE успешно создан."
+  echo "The $TARGET_FILE file has been created successfully."
 else
-  echo "Ошибка при создании файла $TARGET_FILE."
+  echo "Error when creating the $TARGET_FILE."
   exit 1
 fi
