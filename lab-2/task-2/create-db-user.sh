@@ -1,12 +1,14 @@
 #!/bin/bash
 
-# Проверка запуска от root или через sudo
+echo "=== Create DB user ==="
+
+# Rights verification
 if [ "$EUID" -ne 0 ]; then
-  echo "Пожалуйста, запустите скрипт с sudo или от root"
+  echo "Please run the script from root (sudo)."
   exit 1
 fi
 
-# SQL-команды
+# SQL command
 read -r -d '' SQL_CMD << 'EOF'
 CREATE DATABASE IF NOT EXISTS testdb;
 USE testdb;
@@ -21,13 +23,13 @@ GRANT ALL PRIVILEGES ON testdb.* TO 'vagrant_test'@'192.168.50.10';
 FLUSH PRIVILEGES;
 EOF
 
-# Выполнение SQL от root через sudo
+# Executing SQL from root via sudo
 echo "$SQL_CMD" | sudo mysql -u root
 
-# Проверка результата
+# Checking the result
 if [ $? -eq 0 ]; then
-  echo "База, таблица и пользователь успешно созданы."
+  echo "The database, table, and user have been successfully created."
 else
-  echo "Ошибка при выполнении SQL-команд."
+  echo "Error when executing SQL commands."
   exit 1
 fi
